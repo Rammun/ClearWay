@@ -1,0 +1,54 @@
+:root {
+  --cw-root-font-size: 10px;
+  --cw-root-font-size-s: 8px;
+  --cw-root-font-size-xs: 6px;
+
+  --cw-overlay-bg: rgba(0, 0, 0, 0.7);
+  --cw-body-font-size: 1.4rem;
+}
+
+html,
+body {
+  font-size: var(--cw-root-font-size);
+  font-weight: 400;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+@media (max-width: 991.98px) {
+  html,
+  body {
+    font-size: var(--cw-root-font-size-s);
+  }
+}
+
+@media (max-width: 767.98px) {
+  html,
+  body {
+    font-size: var(--cw-root-font-size-xs);
+  }
+}
+
+.cw-body {
+  font-size: var(--cw-body-font-size);
+}
+
+.form-control {
+  font-size: var(--cw-body-font-size);
+}
+
+.d-middle {
+  display: flex;
+  align-items: center;
+}
+
+.d-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.w-3r2 {
+  width: 3.2rem;
+}

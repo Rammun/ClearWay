@@ -1,0 +1,100 @@
+<div class="document-viewer">
+  <div class="document-viewer-header">
+    <h1>{{ document.name }}</h1>
+
+    <div class="document-viewer-toolbar">
+      <div class="zoom-level">
+        {{ zoom }}%
+      </div>
+
+      <button class="btn btn-light btn-lg w-3r2" (click)="onZoomIn()">+</button>
+
+      <button class="btn btn-light btn-lg w-3r2" (click)="onZoomOut()">-</button>
+
+      <button class="btn btn-light btn-lg" (click)="onSave()">Save</button>
+    </div>
+  </div>
+
+  <div class="document-viewer-body">
+    @if (isBusy) {
+      <div>
+        <span class="placeholder w-25"></span>
+        <span class="placeholder w-100"></span>
+        <span class="placeholder w-75"></span>
+      </div>
+    } @else {
+      @if (!document.pages?.length) {
+        <p class="d-center">
+          The document is empty.
+        </p>
+      } @else {
+        <ul class="document-pages">
+          @for (page of document.pages; track page.number) {
+            <li class="document-page">
+              <div
+                class="document-page-content"
+                [style]="{
+                  transform: 'scale({{zoom / 100}})'
+                }"
+              >
+                <img
+                  src="{{baseUrl}}/{{page.imageUrl}}"
+                  alt="page {{page.number}}"
+                  (click)="showAddAnnotationModal(page.number, $event)"
+                />
+                @if (page.annotations.length > 0) {
+                  @for (annotation of page.annotations; track annotation.id) {
+                    @switch (annotation.type) {
+                      @case (AnnotationType.Text) {
+                        <div
+                          class="annotation-text"
+                          cdkDrag
+                          cdkDragBoundary=".document-page-content"
+                          [style]="{
+                            left: annotation.left + '%',
+                            top: annotation.top + '%',
+                          }"
+                        >
+                          <button
+                            type="button"
+                            class="btn-close btn-close-annotation"
+                            aria-label="Close"
+                            (click)="onDeleteAnnotation(annotation)"></button>
+
+                          {{ annotation.text }}
+                        </div>
+                      }
+                      @case (AnnotationType.Image) {
+                        <div
+                          class="annotation-img"
+                          cdkDrag
+                          cdkDragBoundary=".document-page-content"
+                          [style]="{
+                            left: annotation.left + '%',
+                            top: annotation.top + '%',
+                          }"
+                        >
+                          <img
+                            src="{{annotation.imageUrl}}"
+                            alt="image annotation"
+                          />
+                        </div>
+                      }
+                    }
+                  }
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+</div>
+
+@if (isAnnotationModalOpened) {
+  <cw-add-annotation-modal
+    (addAnnotation)="addAnnotation($event)"
+    (closed)="isAnnotationModalOpened = false"
+  ></cw-add-annotation-modal>
+}

@@ -1,0 +1,88 @@
+<div class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Close"
+        (click)="onCancel()"></button>
+
+      <div class="modal-body">
+        <h2 class="text-center">Add Annotation</h2>
+
+        <div class="tabs-container">
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link"
+                 [ngClass]="{active: mode === AnnotationType.Text}"
+                 (click)="setMode(AnnotationType.Text)"
+                 href="javascript:;"
+                 aria-current="page">Text</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link"
+                 [ngClass]="{active: mode === AnnotationType.Image}"
+                 (click)="setMode(AnnotationType.Image)"
+                 href="javascript:;"
+              >Image</a>
+            </li>
+          </ul>
+
+          <div class="mt-4">
+            @switch (mode) {
+              @case (AnnotationType.Text) {
+                <div>
+                  <textarea
+                    class="form-control"
+                    [rows]="5"
+                    [(ngModel)]="text"
+                    maxlength="300"
+                    placeholder="Your annotation"
+                  ></textarea>
+                </div>
+              }
+              @case (AnnotationType.Image) {
+                <div class="card">
+                  <p-fileupload
+                    mode="advanced"
+                    accept="image/*"
+                    maxFileSize="1000000"
+                    (onUpload)="onUploadFile($event)"
+                    [multiple]="false"
+                  >
+                    <ng-template #empty>
+                      <div>Drag and drop files to here to upload.</div>
+                    </ng-template>
+
+                    <ng-template #content>
+                      @if (uploadedFiles.length) {
+                        <ul>
+                          @for (file of uploadedFiles; track file.name) {
+                            <li>{{ file.name }} - {{ file.size }} bytes</li>
+                          }
+                        </ul>
+                      }
+                    </ng-template>
+                  </p-fileupload>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="actions-container">
+          <button
+            class="btn btn-light btn-lg"
+            (click)="onCancel()"
+          >Cancel
+          </button>
+          <button
+            class="btn btn-secondary btn-lg"
+            (click)="onAddAnnotation()"
+          >Add
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
