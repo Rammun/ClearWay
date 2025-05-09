@@ -14,6 +14,8 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
+
+  --p-toast-summary-font-size: var(--cw-body-font-size);
 }
 
 @media (max-width: 991.98px) {
@@ -61,4 +63,8 @@ ul {
 
 .w-3r2 {
   width: 3.2rem;
+}
+
+.fs-2r {
+  font-size: 2rem;
 }

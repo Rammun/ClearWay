@@ -1,8 +1,10 @@
 import {Inject, Injectable} from '@angular/core';
 import {API_REMOTE_SERVICE_URL} from '../app.config';
 import {HttpClient} from '@angular/common/http';
+import {of} from 'rxjs';
 
 export class CwDocumentDto {
+  id!: number;
   name!: string;
   pages!: DocumentPageDto[];
 }
@@ -14,7 +16,6 @@ export class DocumentPageDto {
 
 export class AnnotationDto {
   id!: string;
-  documentId!: number;
   pageNumber!: number;
   type!: string;
   left!: number;
@@ -53,13 +54,21 @@ export class DocumentsService {
   }
 
   getAnnotations(documentId: number) {
-    const SERVICE_NAME = 'annotations';
-    const url = `${this._baseUrl}/${SERVICE_NAME}/${documentId}.json`;
+    const key = `cw-annotations-${documentId}`;
+    const str = localStorage.getItem(key);
+    if (!str) {
+      return of([])
+    }
+    const annotations = JSON.parse(str) as AnnotationDto[];
 
-    return this._http.get<AnnotationDto[]>(url);
+    return of(annotations);
   }
 
-  saveAnnotations() {
+  saveAnnotations(documentId: number, annotations: AnnotationDto[]) {
+    const str = JSON.stringify(annotations);
+    const key = `cw-annotations-${documentId}`;
 
+    localStorage.setItem(key, str);
+    return of(true);
   }
 }

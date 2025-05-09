@@ -1,11 +1,13 @@
 import {AnnotationDto, CwDocumentDto, DocumentPageDto} from './documents.service';
 
 export class CwDocumentViewModel {
+  id: number = 0;
   name: string = '';
   pages: CwDocumentPageViewModel[] = [];
 
   static fromDto(dto: CwDocumentDto): CwDocumentViewModel {
     const vm = new CwDocumentViewModel();
+    vm.id = dto?.id ?? 0;
     vm.name = dto?.name ?? 'Noname';
     vm.pages = dto?.pages?.map(pageDto => CwDocumentPageViewModel.fromDto(pageDto)) ?? [];
 
@@ -41,14 +43,29 @@ export class AnnotationViewModel {
     vm.id = dto?.id ?? '';
     vm.pageNumber = dto?.pageNumber ?? 0;
     vm.type = dto?.type == null
-      ? AnnotationType.Text
-      : AnnotationType[dto.type as keyof typeof AnnotationType];
+      ? dto?.text?.trim() ? AnnotationType.Text : dto?.imageUrl ? AnnotationType.Image : AnnotationType.Unknown
+      : Object.values(AnnotationType).includes(dto.type as AnnotationType)
+        ? dto.type as AnnotationType
+        : AnnotationType.Unknown;
     vm.xPercent = dto?.left ?? 0;
     vm.yPercent = dto?.top ?? 0;
     vm.text = dto?.text ?? '';
     vm.imageUrl = dto?.imageUrl ?? '';
 
     return vm;
+  }
+
+  toDto() {
+    const dto = new AnnotationDto();
+    dto.id = this.id;
+    dto.pageNumber = this.pageNumber;
+    dto.type = this.type;
+    dto.left = this.xPercent;
+    dto.top = this.yPercent;
+    dto.text = this.text;
+    dto.imageUrl = this.imageUrl;
+
+    return dto;
   }
 }
 
