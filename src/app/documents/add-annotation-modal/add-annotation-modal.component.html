@@ -1,4 +1,4 @@
-<div class="modal fade show d-block" tabindex="-1">
+<div class="modal fade show d-block add-annotation-modal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <button
@@ -47,21 +47,13 @@
                     mode="advanced"
                     accept="image/*"
                     maxFileSize="1000000"
-                    (onUpload)="onUploadFile($event)"
+                    [showUploadButton]="false"
+                    [showCancelButton]="false"
+                    (onSelect)="onSelectedFile($event)"
                     [multiple]="false"
                   >
                     <ng-template #empty>
-                      <div>Drag and drop files to here to upload.</div>
-                    </ng-template>
-
-                    <ng-template #content>
-                      @if (uploadedFiles.length) {
-                        <ul>
-                          @for (file of uploadedFiles; track file.name) {
-                            <li>{{ file.name }} - {{ file.size }} bytes</li>
-                          }
-                        </ul>
-                      }
+                      <div>Drag and drop files to here to add.</div>
                     </ng-template>
                   </p-fileupload>
                 </div>

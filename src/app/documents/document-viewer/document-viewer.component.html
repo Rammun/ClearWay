@@ -33,14 +33,12 @@
             <li class="document-page">
               <div
                 class="document-page-content"
-                [style]="{
-                  transform: 'scale({{zoom / 100}})'
-                }"
+                [style.width.%]="zoom"
               >
                 <img
                   src="{{baseUrl}}/{{page.imageUrl}}"
                   alt="page {{page.number}}"
-                  (click)="showAddAnnotationModal(page.number, $event)"
+                  (click)="onShowAddAnnotationModal(page.number, $event)"
                 />
                 @if (page.annotations.length > 0) {
                   @for (annotation of page.annotations; track annotation.id) {
@@ -50,17 +48,13 @@
                           class="annotation-text"
                           cdkDrag
                           cdkDragBoundary=".document-page-content"
-                          [style]="{
-                            left: annotation.left + '%',
-                            top: annotation.top + '%',
-                          }"
+                          (cdkDragMoved)="onDragMove(annotation, $event)"
                         >
                           <button
                             type="button"
                             class="btn-close btn-close-annotation"
                             aria-label="Close"
                             (click)="onDeleteAnnotation(annotation)"></button>
-
                           {{ annotation.text }}
                         </div>
                       }
@@ -74,7 +68,13 @@
                             top: annotation.top + '%',
                           }"
                         >
+                          <button
+                            type="button"
+                            class="btn-close btn-close-annotation"
+                            aria-label="Close"
+                            (click)="onDeleteAnnotation(annotation)"></button>
                           <img
+                            class="annotation-img-content"
                             src="{{annotation.imageUrl}}"
                             alt="image annotation"
                           />
@@ -94,7 +94,7 @@
 
 @if (isAnnotationModalOpened) {
   <cw-add-annotation-modal
-    (addAnnotation)="addAnnotation($event)"
+    (addAnnotation)="onAddAnnotation($event)"
     (closed)="isAnnotationModalOpened = false"
   ></cw-add-annotation-modal>
 }

@@ -64,16 +64,16 @@ export class DocumentViewerComponent implements OnInit {
   }
 
   onZoomOut() {
-    if (this.zoom > 9) {
+    if (this.zoom > 10) {
       this.zoom -= 1;
     }
   }
 
   onSave() {
-
+    console.log(this.document);
   }
 
-  showAddAnnotationModal(pageNumber: number, $event: MouseEvent) {
+  onShowAddAnnotationModal(pageNumber: number, $event: MouseEvent) {
     if (this.isAnnotationModalOpened) {
       return;
     }
@@ -88,7 +88,7 @@ export class DocumentViewerComponent implements OnInit {
     this.isAnnotationModalOpened = true;
   }
 
-  addAnnotation(annotation: NewAnnotation) {
+  onAddAnnotation(annotation: NewAnnotation) {
     const page = this.document.pages.find(p => p.number === this.pageActivity.page);
     if (!page) {
       console.log('Page ' + this.pageActivity.page + ' not found!');
@@ -121,6 +121,10 @@ export class DocumentViewerComponent implements OnInit {
     }
 
     page.annotations = page.annotations.filter(a => a.id !== annotation.id);
+  }
+
+  onDragMove(annotation: AnnotationViewModel, $event: any) {
+    console.log($event)
   }
 
   private getDocument(documentId: number) {

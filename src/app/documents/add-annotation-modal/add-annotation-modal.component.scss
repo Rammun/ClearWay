@@ -1,23 +1,34 @@
-.modal {
+.add-annotation-modal {
   --bs-modal-padding: 2rem;
   background: rgba(0, 0, 0, 0.3);
-}
 
-.btn-close {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  z-index: 999;
-}
+  ::ng-deep {
+    .p-fileupload-content {
+      min-height: 10rem;
+      text-align: center;
+    }
 
-.tabs-container {
-  font-size: 1.5rem;
-}
+    .p-button {
+      font-size: var(--cw-body-font-size);
+    }
+  }
 
-.actions-container {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
+  .btn-close {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    z-index: 999;
+  }
+
+  .tabs-container {
+    font-size: 1.5rem;
+  }
+
+  .actions-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
 }

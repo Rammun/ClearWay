@@ -30,12 +30,22 @@ body {
   }
 }
 
+.btn.btn-lg {
+  --bs-btn-font-size: var(--cw-body-font-size);
+}
+
 .cw-body {
   font-size: var(--cw-body-font-size);
 }
 
 .form-control {
   font-size: var(--cw-body-font-size);
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
 }
 
 .d-middle {
