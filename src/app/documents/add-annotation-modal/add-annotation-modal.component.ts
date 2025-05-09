@@ -30,9 +30,6 @@ export class AddAnnotationModalComponent {
 
   mode = AnnotationType.Text;
   text = '';
-  image = '';
-  isBusy = false;
-
   uploadedFileUrl: string = '';
 
   close() {

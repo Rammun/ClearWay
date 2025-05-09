@@ -1,3 +1,11 @@
-<div>
-  Documents
+<div class="p-5">
+  <h1>Documents</h1>
+
+  <ul class="fs-2r">
+    @for (doc of documents; track doc.id) {
+      <li>
+        <a routerLink="/documents/{{doc.id}}">{{ doc.name }}</a>
+      </li>
+    }
+  </ul>
 </div>

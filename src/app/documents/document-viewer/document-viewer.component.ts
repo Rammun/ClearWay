@@ -8,6 +8,8 @@ import {API_REMOTE_SERVICE_URL} from '../../app.config';
 import {AddAnnotationModalComponent, NewAnnotation} from '../add-annotation-modal/add-annotation-modal.component';
 import {v4 as uuidv4} from 'uuid';
 import {CdkDrag} from '@angular/cdk/drag-drop';
+import {Toast} from 'primeng/toast';
+import {MessageService} from 'primeng/api';
 
 class PageActivity {
   page: number = 0;
@@ -25,11 +27,13 @@ class PageActivity {
   selector: 'document-viewer',
   standalone: true,
   templateUrl: './document-viewer.component.html',
+  styleUrl: './document-viewer.component.scss',
   imports: [
     AddAnnotationModalComponent,
-    CdkDrag
+    CdkDrag,
+    Toast
   ],
-  styleUrl: './document-viewer.component.scss'
+  providers: [MessageService]
 })
 export class DocumentViewerComponent implements OnInit {
 
@@ -47,6 +51,7 @@ export class DocumentViewerComponent implements OnInit {
   constructor(
     private readonly _activatedRoute: ActivatedRoute,
     private readonly _documentsService: DocumentsService,
+    private readonly _messageService: MessageService,
     @Inject(API_REMOTE_SERVICE_URL) _baseUrl: string
   ) {
     this.baseUrl = _baseUrl;
@@ -73,6 +78,25 @@ export class DocumentViewerComponent implements OnInit {
 
   onSave() {
     console.log('--- Save document', this.document);
+    const annotations = this.document.pages
+      .flatMap(p => p.annotations)
+      .map(a => a.toDto());
+
+    this.isBusy = true;
+    this._documentsService.saveAnnotations(this.document.id, annotations)
+      .pipe(
+        catchError(err => {
+          console.log(err);
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.isBusy = false;
+        }),
+        takeUntilDestroyed(this._destroyRef)
+      )
+      .subscribe(() => {
+        this._messageService.add({severity: 'success', summary: 'Annotations saved!'});
+      });
   }
 
   onShowAddAnnotationModal(pageNumber: number, $event: MouseEvent) {
@@ -85,7 +109,7 @@ export class DocumentViewerComponent implements OnInit {
     const y = $event.clientY - rect.top;
     const xPercent = (x / rect.width) * 100;
     const yPercent = (y / rect.height) * 100;
-    this.pageActivity = new PageActivity(pageNumber, xPercent, yPercent, rect);
+    this.pageActivity = new PageActivity(pageNumber, xPercent, yPercent);
 
     this.isAnnotationModalOpened = true;
   }
@@ -116,13 +140,11 @@ export class DocumentViewerComponent implements OnInit {
   }
 
   onDeleteAnnotation(annotation: AnnotationViewModel) {
-    const page = this.document.pages.find(p => p.number === annotation.pageNumber);
+    const page = this.deleteAnnotationOnPage(annotation);
     if (!page) {
       console.log('Page ' + this.pageActivity.page + ' not found!');
       return;
     }
-
-    page.annotations = page.annotations.filter(a => a.id !== annotation.id);
   }
 
   onDragMoved(annotation: AnnotationViewModel, $event: any) {
@@ -134,11 +156,18 @@ export class DocumentViewerComponent implements OnInit {
     const top = nativeElement.offsetTop + $event.distance.y;
     const xPercent = (left / rect.width) * 100;
     const yPercent = (top / rect.height) * 100;
-    annotation.xPercent = xPercent;
-    annotation.yPercent = yPercent;
 
-    // Хак. Удаляем стиль transform вручную, чтобы сохранить позицию аннотации при масштабировании страницы.
-    nativeElement.style.transform = '';
+    // Хак, чтобы удалить стиль transform и сохранить позицию аннотации при масштабировании документа.
+    const page = this.deleteAnnotationOnPage(annotation);
+    const replacement = new AnnotationViewModel();
+    replacement.id = uuidv4();
+    replacement.pageNumber = annotation.pageNumber;
+    replacement.xPercent = xPercent;
+    replacement.yPercent = yPercent;
+    replacement.type = annotation.type;
+    replacement.text = annotation.text;
+    replacement.imageUrl = annotation.imageUrl;
+    page?.annotations.push(replacement);
   }
 
   private getDocument(documentId: number) {
@@ -151,6 +180,7 @@ export class DocumentViewerComponent implements OnInit {
             return EMPTY;
           }
           this.document = CwDocumentViewModel.fromDto(document);
+          this.document.id = documentId;
 
           return this._documentsService.getAnnotations(documentId)
             .pipe(
@@ -175,11 +205,19 @@ export class DocumentViewerComponent implements OnInit {
         }),
         finalize(() => {
           this.isBusy = false;
-          // console.log(this.document);
         }),
         takeUntilDestroyed(this._destroyRef)
       )
       .subscribe();
+  }
+
+  private deleteAnnotationOnPage(annotation: AnnotationViewModel) {
+    const page = this.document.pages?.find(p => p.number === annotation.pageNumber);
+    if (!page) {
+      return null;
+    }
+    page.annotations = page.annotations.filter(a => a.id !== annotation.id);
+    return page;
   }
 
 }

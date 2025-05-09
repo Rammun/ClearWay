@@ -53,7 +53,7 @@
                     [multiple]="false"
                   >
                     <ng-template #empty>
-                      <div>Drag and drop files to here to add.</div>
+                      <div>Drag and drop files to here to upload.</div>
                     </ng-template>
                   </p-fileupload>
                 </div>
@@ -70,6 +70,7 @@
           </button>
           <button
             class="btn btn-secondary btn-lg"
+            [disabled]="!text && !uploadedFileUrl"
             (click)="onAddAnnotation()"
           >Add
           </button>
