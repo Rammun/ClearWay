@@ -11,13 +11,13 @@ import {CdkDrag} from '@angular/cdk/drag-drop';
 
 class PageActivity {
   page: number = 0;
-  top: number = 0;
   left: number = 0;
+  top: number = 0;
 
-  constructor(page?: number, top?: number, left?: number) {
+  constructor(page?: number, left?: number, top?: number) {
     this.page = page ?? 0;
-    this.top = top ?? 0;
     this.left = left ?? 0;
+    this.top = top ?? 0;
   }
 }
 
@@ -42,7 +42,7 @@ export class DocumentViewerComponent implements OnInit {
   isAnnotationModalOpened = false;
   pageActivity: PageActivity = new PageActivity();
 
-  private readonly destroyRef = inject(DestroyRef);
+  private readonly _destroyRef = inject(DestroyRef);
 
   constructor(
     private readonly _activatedRoute: ActivatedRoute,
@@ -60,7 +60,9 @@ export class DocumentViewerComponent implements OnInit {
   }
 
   onZoomIn() {
-    this.zoom += 1;
+    if (this.zoom < 200) {
+      this.zoom += 1;
+    }
   }
 
   onZoomOut() {
@@ -70,7 +72,7 @@ export class DocumentViewerComponent implements OnInit {
   }
 
   onSave() {
-    console.log(this.document);
+    console.log('--- Save document', this.document);
   }
 
   onShowAddAnnotationModal(pageNumber: number, $event: MouseEvent) {
@@ -83,7 +85,7 @@ export class DocumentViewerComponent implements OnInit {
     const y = $event.clientY - rect.top;
     const xPercent = (x / rect.width) * 100;
     const yPercent = (y / rect.height) * 100;
-    this.pageActivity = new PageActivity(pageNumber, xPercent, yPercent);
+    this.pageActivity = new PageActivity(pageNumber, xPercent, yPercent, rect);
 
     this.isAnnotationModalOpened = true;
   }
@@ -99,8 +101,8 @@ export class DocumentViewerComponent implements OnInit {
       const annotationVm = new AnnotationViewModel();
       annotationVm.id = uuidv4();
       annotationVm.pageNumber = this.pageActivity.page;
-      annotationVm.top = this.pageActivity.top;
-      annotationVm.left = this.pageActivity.left;
+      annotationVm.yPercent = this.pageActivity.top;
+      annotationVm.xPercent = this.pageActivity.left;
       annotationVm.type = !!annotation.text?.trim()
         ? AnnotationType.Text
         : !!annotation.image ? AnnotationType.Image : AnnotationType.Unknown;
@@ -123,8 +125,20 @@ export class DocumentViewerComponent implements OnInit {
     page.annotations = page.annotations.filter(a => a.id !== annotation.id);
   }
 
-  onDragMove(annotation: AnnotationViewModel, $event: any) {
-    console.log($event)
+  onDragMoved(annotation: AnnotationViewModel, $event: any) {
+    const nativeElement = $event.source.element.nativeElement as HTMLElement;
+    const container = nativeElement.parentElement as HTMLElement;
+    const rect = container.getBoundingClientRect();
+
+    const left = nativeElement.offsetLeft + $event.distance.x;
+    const top = nativeElement.offsetTop + $event.distance.y;
+    const xPercent = (left / rect.width) * 100;
+    const yPercent = (top / rect.height) * 100;
+    annotation.xPercent = xPercent;
+    annotation.yPercent = yPercent;
+
+    // Хак. Удаляем стиль transform вручную, чтобы сохранить позицию аннотации при масштабировании страницы.
+    nativeElement.style.transform = '';
   }
 
   private getDocument(documentId: number) {
@@ -163,7 +177,7 @@ export class DocumentViewerComponent implements OnInit {
           this.isBusy = false;
           // console.log(this.document);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this._destroyRef)
       )
       .subscribe();
   }

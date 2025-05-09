@@ -48,7 +48,9 @@
                           class="annotation-text"
                           cdkDrag
                           cdkDragBoundary=".document-page-content"
-                          (cdkDragMoved)="onDragMove(annotation, $event)"
+                          [style.left.%]="annotation.xPercent"
+                          [style.top.%]="annotation.yPercent"
+                          (cdkDragEnded)="onDragMoved(annotation, $event)"
                         >
                           <button
                             type="button"
@@ -63,10 +65,9 @@
                           class="annotation-img"
                           cdkDrag
                           cdkDragBoundary=".document-page-content"
-                          [style]="{
-                            left: annotation.left + '%',
-                            top: annotation.top + '%',
-                          }"
+                          [style.left.%]="annotation.xPercent"
+                          [style.top.%]="annotation.yPercent"
+                          (cdkDragEnded)="onDragMoved(annotation, $event)"
                         >
                           <button
                             type="button"

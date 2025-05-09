@@ -29,8 +29,6 @@
     padding: 4rem;
 
     .document-page {
-      display: flex;
-
       &:not(:last-child) {
         margin-bottom: 2rem;
       }

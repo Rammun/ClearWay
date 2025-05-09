@@ -31,8 +31,8 @@ export class AnnotationViewModel {
   id: string = '';
   pageNumber: number = 0;
   type: AnnotationType = AnnotationType.Text;
-  left: number = 0;
-  top: number = 0;
+  xPercent: number = 0;
+  yPercent: number = 0;
   text: string = '';
   imageUrl: string = '';
 
@@ -43,8 +43,8 @@ export class AnnotationViewModel {
     vm.type = dto?.type == null
       ? AnnotationType.Text
       : AnnotationType[dto.type as keyof typeof AnnotationType];
-    vm.left = dto?.left ?? 0;
-    vm.top = dto?.top ?? 0;
+    vm.xPercent = dto?.left ?? 0;
+    vm.yPercent = dto?.top ?? 0;
     vm.text = dto?.text ?? '';
     vm.imageUrl = dto?.imageUrl ?? '';
 
