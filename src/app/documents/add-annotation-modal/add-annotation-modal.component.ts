@@ -3,7 +3,7 @@ import {AnnotationType} from '../documents.model';
 import {NgClass} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {NgxFileDropModule} from 'ngx-file-drop';
-import {FileUpload} from 'primeng/fileupload';
+import {FileSelectEvent, FileUpload} from 'primeng/fileupload';
 
 export interface NewAnnotation {
   text?: string;
@@ -33,7 +33,7 @@ export class AddAnnotationModalComponent {
   image = '';
   isBusy = false;
 
-  uploadedFiles: any[] = [];
+  uploadedFileUrl: string = '';
 
   close() {
     this.closed.emit();
@@ -55,16 +55,13 @@ export class AddAnnotationModalComponent {
     }
     if (this.mode === AnnotationType.Image) {
       this.addAnnotation.emit({
-        image: this.text
+        image: this.uploadedFileUrl
       });
     }
   }
 
-  onUploadFile($event: any) {
-    for (let file of $event.files) {
-      this.uploadedFiles.push(file);
-    }
-    console.log(this.uploadedFiles);
+  onSelectedFile($event: FileSelectEvent) {
+    this.uploadedFileUrl = URL.createObjectURL($event.files[0]);
   }
 
 }
