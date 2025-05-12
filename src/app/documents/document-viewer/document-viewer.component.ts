@@ -2,14 +2,14 @@ import {Component, DestroyRef, Inject, inject, OnInit} from '@angular/core';
 import {AnnotationType, AnnotationViewModel, CwDocumentViewModel} from '../documents.model';
 import {DocumentsService} from '../documents.service';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
-import {catchError, EMPTY, finalize, of, switchMap, tap} from 'rxjs';
+import {catchError, EMPTY, finalize, of, Subject, switchMap, tap, throttleTime} from 'rxjs';
 import {ActivatedRoute} from '@angular/router';
 import {API_REMOTE_SERVICE_URL} from '../../app.config';
 import {AddAnnotationModalComponent, NewAnnotation} from '../add-annotation-modal/add-annotation-modal.component';
 import {v4 as uuidv4} from 'uuid';
-import {CdkDrag} from '@angular/cdk/drag-drop';
 import {Toast} from 'primeng/toast';
 import {MessageService} from 'primeng/api';
+import {NgClass} from '@angular/common';
 
 class PageActivity {
   page: number = 0;
@@ -30,8 +30,9 @@ class PageActivity {
   styleUrl: './document-viewer.component.scss',
   imports: [
     AddAnnotationModalComponent,
-    CdkDrag,
-    Toast
+    // CdkDrag,
+    Toast,
+    NgClass
   ],
   providers: [MessageService]
 })
@@ -46,6 +47,11 @@ export class DocumentViewerComponent implements OnInit {
   isAnnotationModalOpened = false;
   pageActivity: PageActivity = new PageActivity();
 
+  private mouseClientX = 0;
+  private mouseClientY = 0;
+  private startDragging = false;
+
+  private readonly _dragAnnotation$ = new Subject<{ annotation: AnnotationViewModel, $event: MouseEvent }>();
   private readonly _destroyRef = inject(DestroyRef);
 
   constructor(
@@ -62,6 +68,15 @@ export class DocumentViewerComponent implements OnInit {
     if (!!documentId) {
       this.getDocument(documentId);
     }
+
+    this._dragAnnotation$
+      .pipe(
+        throttleTime(5),
+        takeUntilDestroyed(this._destroyRef)
+      )
+      .subscribe(({annotation, $event}) => {
+        this.moveAnnotation(annotation, $event);
+      });
   }
 
   onZoomIn() {
@@ -147,27 +162,71 @@ export class DocumentViewerComponent implements OnInit {
     }
   }
 
-  onDragMoved(annotation: AnnotationViewModel, $event: any) {
-    const nativeElement = $event.source.element.nativeElement as HTMLElement;
-    const container = nativeElement.parentElement as HTMLElement;
-    const rect = container.getBoundingClientRect();
+  // onDragMoved(annotation: AnnotationViewModel, $event: any) {
+  //   const nativeElement = $event.source.element.nativeElement as HTMLElement;
+  //   const container = nativeElement.parentElement as HTMLElement;
+  //   const rect = container.getBoundingClientRect();
+  //
+  //   const left = nativeElement.offsetLeft + $event.distance.x;
+  //   const top = nativeElement.offsetTop + $event.distance.y;
+  //   const xPercent = (left / rect.width) * 100;
+  //   const yPercent = (top / rect.height) * 100;
+  //
+  //   // Хак, чтобы удалить стиль transform и сохранить позицию аннотации при масштабировании документа.
+  //   const page = this.deleteAnnotationOnPage(annotation);
+  //   const replacement = new AnnotationViewModel();
+  //   replacement.id = uuidv4();
+  //   replacement.pageNumber = annotation.pageNumber;
+  //   replacement.xPercent = xPercent;
+  //   replacement.yPercent = yPercent;
+  //   replacement.type = annotation.type;
+  //   replacement.text = annotation.text;
+  //   replacement.imageUrl = annotation.imageUrl;
+  //   page?.annotations.push(replacement);
+  // }
 
-    const left = nativeElement.offsetLeft + $event.distance.x;
-    const top = nativeElement.offsetTop + $event.distance.y;
-    const xPercent = (left / rect.width) * 100;
-    const yPercent = (top / rect.height) * 100;
+  onStartDragging(annotation: AnnotationViewModel, $event: any) {
+    this.startDragging = true;
 
-    // Хак, чтобы удалить стиль transform и сохранить позицию аннотации при масштабировании документа.
-    const page = this.deleteAnnotationOnPage(annotation);
-    const replacement = new AnnotationViewModel();
-    replacement.id = uuidv4();
-    replacement.pageNumber = annotation.pageNumber;
-    replacement.xPercent = xPercent;
-    replacement.yPercent = yPercent;
-    replacement.type = annotation.type;
-    replacement.text = annotation.text;
-    replacement.imageUrl = annotation.imageUrl;
-    page?.annotations.push(replacement);
+    const GRAB_DELAY = 300;
+    setTimeout(() => {
+      if (this.startDragging) {
+        this.startDragging = false;
+
+        const annotationEl = $event.target?.parentElement as HTMLElement;
+        const parent = annotationEl?.offsetParent as HTMLElement;
+        if (!parent) {
+          return;
+        }
+        annotation.element = annotationEl;
+        annotation.parentElement = parent;
+        const annotationRect = annotation.element.getBoundingClientRect();
+        const parentRect = annotation.parentElement.getBoundingClientRect();
+        this.mouseClientX = $event.clientX - (annotationRect.left - parentRect.left);
+        this.mouseClientY = $event.clientY - (annotationRect.top - parentRect.top);
+
+        annotation.isDragging = true;
+      }
+    }, GRAB_DELAY);
+  }
+
+  onEndDragging(annotation: AnnotationViewModel) {
+    this.startDragging = false;
+    annotation.isDragging = false;
+  }
+
+  onDragAnnotation(annotation: AnnotationViewModel, $event: any) {
+    if (!annotation.isDragging) {
+      return;
+    }
+
+    $event.stopPropagation();
+    $event.preventDefault();
+
+    this._dragAnnotation$.next({
+      annotation,
+      $event
+    });
   }
 
   private getDocument(documentId: number) {
@@ -218,6 +277,28 @@ export class DocumentViewerComponent implements OnInit {
     }
     page.annotations = page.annotations.filter(a => a.id !== annotation.id);
     return page;
+  }
+
+  private moveAnnotation(annotation: AnnotationViewModel, $event: MouseEvent) {
+    const annotationEl = annotation.element;
+    const parentEl = annotation.parentElement;
+    if (annotationEl === null || parentEl === null) {
+      return;
+    }
+
+    const annotationRect = annotationEl.getBoundingClientRect();
+
+    const newX = $event.clientX - this.mouseClientX;
+    const newY = $event.clientY - this.mouseClientY;
+
+    const maxX = parentEl.clientWidth - annotationRect.width;
+    const maxY = parentEl.clientHeight - annotationRect.height;
+
+    const clampedX = Math.min(Math.max(0, newX), maxX);
+    const clampedY = Math.min(Math.max(0, newY), maxY);
+
+    annotation.xPercent = (clampedX / parentEl.clientWidth) * 100;
+    annotation.yPercent = (clampedY / parentEl.clientHeight) * 100;
   }
 
 }

@@ -38,13 +38,13 @@
                 <img
                   src="{{baseUrl}}/{{page.imageUrl}}"
                   alt="page {{page.number}}"
-                  (click)="onShowAddAnnotationModal(page.number, $event)"
+                  (dblclick)="onShowAddAnnotationModal(page.number, $event)"
                 />
                 @if (page.annotations.length > 0) {
                   @for (annotation of page.annotations; track annotation.id) {
                     @switch (annotation.type) {
                       @case (AnnotationType.Text) {
-                        <div
+                        <!--  <div
                           class="annotation-text"
                           cdkDrag
                           cdkDragBoundary=".document-page-content"
@@ -58,16 +58,56 @@
                             aria-label="Close"
                             (click)="onDeleteAnnotation(annotation)"></button>
                           {{ annotation.text }}
+                        </div>  -->
+
+                        <div
+                          class="annotation-text"
+                          [style.left.%]="annotation.xPercent"
+                          [style.top.%]="annotation.yPercent"
+                          [ngClass]="{'cursor-grab': annotation.isDragging}"
+                          (mousedown)="onStartDragging(annotation, $event)"
+                          (mouseup)="onEndDragging(annotation)"
+                          (mousemove)="onDragAnnotation(annotation, $event)"
+                        >
+                          <button
+                            type="button"
+                            class="btn-close btn-close-annotation"
+                            aria-label="Close"
+                            (click)="onDeleteAnnotation(annotation)"></button>
+                          <div>
+                            {{ annotation.text }}
+                          </div>
                         </div>
                       }
                       @case (AnnotationType.Image) {
+                        <!--  <div
+                            class="annotation-img"
+                            cdkDrag
+                            cdkDragBoundary=".document-page-content"
+                            [style.left.%]="annotation.xPercent"
+                            [style.top.%]="annotation.yPercent"
+                            (cdkDragEnded)="onDragMoved(annotation, $event)"
+
+                            <button
+                              type="button"
+                              class="btn-close btn-close-annotation"
+                              aria-label="Close"
+                              (click)="onDeleteAnnotation(annotation)"></button>
+                            <img
+                              class="annotation-img-content"
+                              src="{{annotation.imageUrl}}"
+                              alt="annotation image"
+                            />
+                          </div>  -->
+
                         <div
                           class="annotation-img"
-                          cdkDrag
-                          cdkDragBoundary=".document-page-content"
                           [style.left.%]="annotation.xPercent"
                           [style.top.%]="annotation.yPercent"
-                          (cdkDragEnded)="onDragMoved(annotation, $event)"
+                          [ngClass]="{'cursor-grab': annotation.isDragging}"
+                          (mousedown)="onStartDragging(annotation, $event)"
+                          (mouseup)="onEndDragging(annotation)"
+                          (mousemove)="onDragAnnotation(annotation, $event)"
                         >
                           <button
                             type="button"
@@ -76,6 +116,7 @@
                             (click)="onDeleteAnnotation(annotation)"></button>
                           <img
                             class="annotation-img-content"
+                            draggable="false"
                             src="{{annotation.imageUrl}}"
                             alt="annotation image"
                           />

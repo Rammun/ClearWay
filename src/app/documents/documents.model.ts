@@ -37,6 +37,9 @@ export class AnnotationViewModel {
   yPercent: number = 0;
   text: string = '';
   imageUrl: string = '';
+  isDragging = false;
+  element: HTMLElement | null = null;
+  parentElement: HTMLElement | null = null;
 
   static fromDto(dto: AnnotationDto): AnnotationViewModel {
     const vm = new AnnotationViewModel();
